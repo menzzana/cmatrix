@@ -19,30 +19,58 @@ import sqlite3
 import sys
 import cgi
 import os
+import hashlib
+import random
 from bottle import template, response, request
 #-----------------------------------------------------------------------
 # Constants
 #-----------------------------------------------------------------------
 DBADDRESS="cmatrix.sqlite"
 PRINTMATRIX="select * from cmatrix order by category,competence,username"
+UPDATESESSTION="update user set session_id=? where username=?"
 SCALE="select * from competence_scale order by id"
 #-----------------------------------------------------------------------
 # Function
 #-----------------------------------------------------------------------
-def getUsernameCookie():
+def getRandomString():
+  RANDOMPASSWD="ABCDEFGHJKLMNPQRSTUVXYZabcdefghjkmnpqrstuvxyz23456789"
+  s1=""
+  random.seed()
+  for i in range(0,20):
+    s1=s1+RANDOMPASSWD[random.randint(0,len(RANDOMPASSWD)-1)]
+  return s1
+#-----------------------------------------------------------------------
+def getSessionCookie():
   if 'HTTP_COOKIE' in os.environ:
    for cookie in os.environ['HTTP_COOKIE'].split(';'):
       (key, value ) = cookie.split('=');
-      if key.strip() == "username":
+      if key.strip() == "session_id":
          return value
   return None
 #-----------------------------------------------------------------------
-def getUser(cur,form):
-  if form.getvalue('username') is not None and form.getvalue('password') is not None:
-    cur.execute("select username from user where username=? and password=?",(form.getvalue('username'),form.getvalue('password')))
+def encryptText(text):
+  return hashlib.md5(text.encode()).hexdigest()
+#-----------------------------------------------------------------------
+def getSessionUser(cur,session_id):
+  if session_id is not None:
+    cur.execute("select username from user where session_id=?",(session_id,))
     row=cur.fetchone()
     if row is not None:
-      return form.getvalue('username')
+      return row['username']
+  return None
+#-----------------------------------------------------------------------
+def getUser(cur,form,session_id):
+  if form.getvalue('username') is not None and form.getvalue('password') is not None:
+    cur.execute("select salt from user where username=?",(form.getvalue('username'),))
+    row=cur.fetchone()
+    if row is not None:
+      hash_password=encryptText(form.getvalue('password')+row['salt'])
+      cur.execute("select username from user where username=? and password=?",(form.getvalue('username'),hash_password))
+      row=cur.fetchone()
+      if row is not None:
+        cur.execute(UPDATESESSTION,(session_id,form.getvalue('username')))
+        conn.commit()
+        return form.getvalue('username')
   return None
 #-----------------------------------------------------------------------
 # Main
@@ -54,11 +82,13 @@ try:
   conn=sqlite3.connect(DBADDRESS)
   conn.row_factory=sqlite3.Row
   cur=conn.cursor()
-  username=getUser(cur,form)
+  session_id=getRandomString()
+  username=getUser(cur,form,session_id)
   if username is None:
-    username=getUsernameCookie()
+    session_id=getSessionCookie()
+    username=getSessionUser(cur,session_id)
   else:
-    response.set_cookie('username',form.getvalue('username'), path='/')
+    response.set_cookie('session_id',session_id, path='/')
   response.content_type = 'text/html; charset=UTF-8' 
   print(response)
   if username is None:

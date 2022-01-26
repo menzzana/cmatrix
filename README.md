@@ -9,9 +9,8 @@ and under which categories.
 The software is capable of color coding the users competence and visualize them in a competence
 matrix.
 
-This is a first version and this software is under development, as such
-the user login is not secure and passwords are stored as normal characters in the database.
-Future versions will improve security and other requested functionality.
+This is a first version and this software is under development.
+Future versions will include other requested functionality.
 
 ## Dependencies
 
@@ -45,10 +44,12 @@ Goto to your the cgi-bin folder of your apache installation
 git clone https://github.com/menzzana/cmatrix
 wget http://bottlepy.org/bottle.py
 sqlite3 cmatrix.sqlite < cmatrix.sql
-sqlite3 cmatrix.sqlite "insert into user(username,password,full_name) Values('<USERNAME>','<PASSWORD>','<FULL NAME>');"
 ````
 
-New users can be added by copying the last line
+New users can be added by using script **create_user.py**
+````
+create_user.py <username> <first name> <last name>
+````
 
 # License
 
