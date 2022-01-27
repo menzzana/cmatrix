@@ -27,7 +27,8 @@ from bottle import template, response, request
 #-----------------------------------------------------------------------
 DBADDRESS="cmatrix.sqlite"
 PRINTMATRIX="select * from cmatrix where username=? order by category,competence"
-UPDATESESSTION="update user set session_id=? where username=?"
+UPDATESESSTION="update user set session_id=?,session_time=datetime('now','start of day','+2 day') where username=?"
+CHECKSESSION="select username from user where session_id=? and session_time>datetime('now')"
 SCALE="select * from competence_scale order by id"
 #-----------------------------------------------------------------------
 # Function
@@ -53,7 +54,7 @@ def encryptText(text):
 #-----------------------------------------------------------------------
 def getSessionUser(cur,session_id):
   if session_id is not None:
-    cur.execute("select username from user where session_id=?",(session_id,))
+    cur.execute(CHECKSESSION,(session_id,))
     row=cur.fetchone()
     if row is not None:
       return row['username']

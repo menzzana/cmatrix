@@ -5,7 +5,8 @@ CREATE TABLE user (
 	full_name VARCHAR(45)  NOT NULL,
     salt VARCHAR(6) UNIQUE,
 	password VARCHAR(45)  NOT NULL,
-	session_id VARCHAR(45)
+	session_id VARCHAR(45),
+	session_time VARCHAR(20)
 	);
 CREATE TABLE category (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,

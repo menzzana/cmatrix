@@ -31,7 +31,8 @@ NEWCOMPETENCE="insert into competence(category_id,name) Values(?,?)"
 CHECKUSERCOMPETENCE="select id from user_competence where user_id=? and competence_id=?"
 INSERTUSERCOMPETENCE="insert into user_competence(user_id,competence_id,scale_id) Values(?,?,?)"
 UPDATEUSERCOMPETENCE="update user_competence set scale_id=? where id=?"
-UPDATESESSTION="update user set session_id=? where username=?"
+UPDATESESSTION="update user set session_id=?,session_time=datetime('now','start of day','+2 day') where username=?"
+CHECKSESSION="select username from user where session_id=? and session_time>datetime('now')"
 #-----------------------------------------------------------------------
 # Functions
 #-----------------------------------------------------------------------
@@ -70,7 +71,7 @@ def encryptText(text):
 #-----------------------------------------------------------------------
 def getSessionUser(cur,session_id):
   if session_id is not None:
-    cur.execute("select username from user where session_id=?",(session_id,))
+    cur.execute(CHECKSESSION,(session_id,))
     row=cur.fetchone()
     if row is not None:
       return row['username']
